@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import RunView from "@/components/RunView";
+import { apiFetch, streamTask } from "@/lib/api";
 import {
   ACTIONS,
   formatBytes,
@@ -71,6 +72,7 @@ function NewTaskForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [run, setRun] = useState<Run | null>(null);
+  const [live, setLive] = useState<string[]>([]);
 
   const wantsEmail = action === "email" || action === "both";
   const wantsReport = action === "report" || action === "both";
@@ -146,6 +148,7 @@ function NewTaskForm() {
     setLoading(true);
     setError(null);
     setRun(null);
+    setLive([]);
 
     const payload: Record<string, unknown> = { action };
     if (message.trim()) payload.message = message.trim();
@@ -164,18 +167,47 @@ function NewTaskForm() {
     }
 
     try {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.detail ?? `HTTP ${res.status}`);
+      if (!fileData) {
+        await streamTask(payload, (event, value) => {
+          if (event === "start") {
+            setLive(["Task started"]);
+            return;
+          }
+          if (event === "step") {
+            const data = value as {
+              node?: string;
+              steps?: { node: string; status: string; ms: number }[];
+            };
+            const messages = (data.steps ?? []).map(
+              (step) => `${step.node}: ${step.status} (${step.ms} ms)`,
+            );
+            setLive((current) => [
+              ...current,
+              ...(messages.length ? messages : [`${data.node ?? "node"} updated`]),
+            ]);
+            return;
+          }
+          if (event === "done") {
+            setRun(value as Run);
+            return;
+          }
+          if (event === "error") {
+            throw new Error(
+              (value as { error?: string })?.error ?? "Stream failed",
+            );
+          }
+        });
+      } else {
+        const res = await apiFetch("/tasks", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.detail ?? `HTTP ${res.status}`);
+        }
+        setRun(data as Run);
       }
-
-      setRun(data as Run);
       document
         .getElementById("result")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -364,6 +396,13 @@ function NewTaskForm() {
         </div>
         {error ? <p className="error">Error: {error}</p> : null}
       </form>
+
+      {live.length ? (
+        <section className="card">
+          <h2>Live progress</h2>
+          <pre className="preview">{live.join("\n")}</pre>
+        </section>
+      ) : null}
 
       <div id="result">
         {run ? (

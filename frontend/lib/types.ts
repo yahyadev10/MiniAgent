@@ -1,5 +1,7 @@
 export type Step = { node: string; status: string; ms: number };
 
+export type Citation = { title: string; url: string };
+
 export type Artifact = {
   kind: string;
   filename: string;
@@ -17,6 +19,20 @@ export type Run = {
   duration_ms: number;
   created_at: string;
   artifacts: Artifact[];
+  citations?: Citation[];
+  owner?: string;
+};
+
+export type Job = {
+  id: string;
+  status: "queued" | "running" | "done" | "failed";
+  progress: number;
+};
+
+export type JobStatus = Job & {
+  result: Run | null;
+  error: string | null;
+  created_at: string;
 };
 
 export type Stats = {

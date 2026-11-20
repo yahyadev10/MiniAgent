@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { apiFetch } from "@/lib/api";
 import {
   ACTION_LABEL,
   ACTIONS,
@@ -28,9 +29,7 @@ export default function HistoryPage() {
       if (nextQuery.trim()) {
         params.set("q", nextQuery.trim());
       }
-      const res = await fetch(`/api/history?${params.toString()}`, {
-        cache: "no-store",
-      });
+      const res = await apiFetch(`/history?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.detail ?? `HTTP ${res.status}`);

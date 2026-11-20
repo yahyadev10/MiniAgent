@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { apiFetch } from "@/lib/api";
 import type { Capabilities } from "@/lib/types";
 
 type Health = { status?: string; detail?: string };
@@ -21,8 +22,8 @@ export default function SystemPage() {
   const load = useCallback(async () => {
     try {
       const [capRes, healthRes] = await Promise.all([
-        fetch("/api/capabilities", { cache: "no-store" }),
-        fetch("/api/health", { cache: "no-store" }),
+        apiFetch("/capabilities"),
+        apiFetch("/health"),
       ]);
       const capData = await capRes.json().catch(() => ({}));
       const healthData = await healthRes.json().catch(() => ({}));

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { apiFetch } from "@/lib/api";
 import {
   artifactHref,
   formatBytes,
@@ -23,7 +24,7 @@ export default function FilesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/files?limit=200", { cache: "no-store" });
+      const res = await apiFetch("/files?limit=200");
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data?.detail ?? `HTTP ${res.status}`);

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { apiFetch } from "@/lib/api";
 import {
   ACTION_LABEL,
   formatMs,
@@ -42,8 +43,8 @@ export default function DashboardPage() {
   const load = useCallback(async () => {
     try {
       const [dashRes, capRes] = await Promise.all([
-        fetch("/api/dashboard?limit=8", { cache: "no-store" }),
-        fetch("/api/capabilities", { cache: "no-store" }),
+        apiFetch("/dashboard?limit=8"),
+        apiFetch("/capabilities"),
       ]);
       if (!dashRes.ok) {
         throw new Error(`Dashboard HTTP ${dashRes.status}`);

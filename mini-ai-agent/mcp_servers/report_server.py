@@ -403,6 +403,7 @@ def _render_pdf(
     insights: list[str],
     chart: _Drawing | None,
     sources: list[dict[str, str]],
+    citations: list[dict[str, str]],
 ) -> None:
     styles = getSampleStyleSheet()
     body_style = styles["BodyText"].clone("body")
@@ -490,6 +491,14 @@ def _render_pdf(
             )
         )
         story.append(source_table)
+        story.append(Spacer(1, 0.4 * cm))
+
+    if citations:
+        story.append(Paragraph("Cited sources", styles["Heading2"]))
+        for index, item in enumerate(citations, start=1):
+            label = _pdf_markup(item.get("title", "Untitled"))
+            url = _pdf_markup(item.get("url", ""))
+            story.append(Paragraph(f"[{index}] {label}<br/>{url}", cell_style))
         story.append(Spacer(1, 0.4 * cm))
 
     story.append(Paragraph("Key insights", styles["Heading2"]))
@@ -606,6 +615,7 @@ def _render_html(
     summary: list[dict[str, object]],
     insights: list[str],
     sources: list[dict[str, str]],
+    citations: list[dict[str, str]],
 ) -> None:
     def esc(value: object) -> str:
         return html.escape(_clean_text(value))
@@ -701,6 +711,15 @@ def _render_html(
             f'<span class="badge">{len(headers)} columns</span>'
             f'<span class="badge">{len(summary)} numeric</span>'
         )
+    citations_html = ""
+    if citations:
+        items = "".join(
+            f'<li><a href="{esc(_safe_url(item.get("url", "")))}">'
+            f'[{index}] {esc(item.get("title", "Untitled"))}</a></li>'
+            for index, item in enumerate(citations, start=1)
+        )
+        citations_html = f"<h2>Cited sources</h2><ul>{items}</ul>"
+
     insights_section = (
         f"<h2>Key insights</h2><ul>{insights_html}</ul>" if insights else ""
     )
@@ -776,6 +795,7 @@ def _render_html(
 <h2>{overview_title}</h2>
 <div class="prose">{overview_html}</div>
 {sources_html}
+{citations_html}
 {insights_section}
 {bars_html}
 {data_html}
@@ -794,6 +814,7 @@ def generate_report(
     data: str = "",
     source_filename: str = "",
     sources: list[dict] | None = None,
+    citations: list[dict] | None = None,
 ) -> str:
     """Generate a real PDF + HTML report with optional data and web sources."""
     title = _clean_text(title, 200) or "Mini AI Agent Report"
@@ -807,6 +828,14 @@ def generate_report(
         }
         for item in (sources or [])
         if isinstance(item, dict) and str(item.get("url", "")).strip()
+    ][:8]
+    clean_citations = [
+        {
+            "title": _clean_text(item.get("title", ""), 200),
+            "url": str(item.get("url", "") or "").strip()[:500],
+        }
+        for item in (citations or [])
+        if isinstance(item, dict) and str(item.get("url", "") or "").strip()
     ][:8]
 
     headers, body = _parse_data(data) if data else ([], [])
@@ -842,6 +871,7 @@ def generate_report(
         insights,
         chart,
         clean_sources,
+        clean_citations,
     )
     _render_html(
         html_path,
@@ -853,6 +883,7 @@ def generate_report(
         summary,
         insights,
         clean_sources,
+        clean_citations,
     )
 
     payload = {

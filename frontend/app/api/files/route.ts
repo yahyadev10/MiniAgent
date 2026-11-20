@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { authHeaders } from "@/lib/server-api";
+
 const API_BASE = process.env.API_BASE ?? "http://localhost:8000";
 
 export async function GET(request: Request) {
@@ -9,7 +11,7 @@ export async function GET(request: Request) {
   try {
     const response = await fetch(
       `${API_BASE}/artifacts?limit=${encodeURIComponent(limit)}`,
-      { cache: "no-store" },
+      { headers: authHeaders(request), cache: "no-store" },
     );
     const data = await response.json().catch(() => ({}));
     return NextResponse.json(data, { status: response.status });

@@ -16,6 +16,7 @@ class AgentState(TypedDict, total=False):
     content: str
     search_query: str
     sources: list[dict]
+    citations: list[dict]
     action: str
     email_args: dict
     report_args: dict

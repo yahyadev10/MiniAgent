@@ -79,6 +79,22 @@ export default function RunView({ run }: { run: Run }) {
         </p>
       ) : null}
 
+      {run.citations?.length ? (
+        <>
+          <h3 className="panel-title">Cited sources</h3>
+          <ol className="timeline">
+            {run.citations.map((citation, index) => (
+              <li key={`${citation.url}-${index}`} className="timeline-item">
+                <span className="dot" />
+                <a href={citation.url} target="_blank" rel="noreferrer">
+                  [{index + 1}] {citation.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </>
+      ) : null}
+
       <h3 className="panel-title">Final answer</h3>
       <p className="final">{run.final}</p>
     </section>

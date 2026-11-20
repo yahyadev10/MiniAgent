@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { authHeaders } from "@/lib/server-api";
+
 const API_BASE = process.env.API_BASE ?? "http://localhost:8000";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
@@ -14,6 +16,7 @@ export async function GET(
 
   try {
     const response = await fetch(`${API_BASE}/history/${encodeURIComponent(id)}`, {
+      headers: authHeaders(request),
       cache: "no-store",
     });
     const data = await response.json().catch(() => ({}));

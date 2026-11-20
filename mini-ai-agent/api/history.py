@@ -38,7 +38,8 @@ def init_db() -> None:
                 steps TEXT NOT NULL,
                 duration_ms INTEGER NOT NULL,
                 created_at TEXT NOT NULL,
-                artifacts TEXT NOT NULL DEFAULT '[]'
+                artifacts TEXT NOT NULL DEFAULT '[]',
+                owner TEXT NOT NULL DEFAULT 'public'
             )
             """
         )
@@ -48,6 +49,10 @@ def init_db() -> None:
         if "artifacts" not in columns:
             conn.execute(
                 "ALTER TABLE runs ADD COLUMN artifacts TEXT NOT NULL DEFAULT '[]'"
+            )
+        if "owner" not in columns:
+            conn.execute(
+                "ALTER TABLE runs ADD COLUMN owner TEXT NOT NULL DEFAULT 'public'"
             )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_runs_created_at "
@@ -70,6 +75,7 @@ def _row_to_run(row: sqlite3.Row) -> dict[str, Any]:
         "duration_ms": row["duration_ms"],
         "created_at": row["created_at"],
         "artifacts": json.loads(row["artifacts"] or "[]"),
+        "owner": row["owner"] if "owner" in row.keys() else "public",
     }
 
 
@@ -79,8 +85,8 @@ def save_run(run: dict[str, Any]) -> None:
             """
             INSERT INTO runs
                 (id, message, action, results, final, steps, duration_ms,
-                 created_at, artifacts)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, artifacts, owner)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run["id"],
@@ -92,13 +98,14 @@ def save_run(run: dict[str, Any]) -> None:
                 run["duration_ms"],
                 run["created_at"],
                 json.dumps(run.get("artifacts", []), ensure_ascii=False),
+                run.get("owner", "public"),
             ),
         )
 
 
-def _where(action: str | None, q: str | None) -> tuple[str, list[Any]]:
-    clauses: list[str] = []
-    params: list[Any] = []
+def _where(action: str | None, q: str | None, owner: str = "public") -> tuple[str, list[Any]]:
+    clauses: list[str] = ["owner = ?"]
+    params: list[Any] = [owner]
     if action and action != "all":
         clauses.append("action = ?")
         params.append(action)
@@ -113,8 +120,9 @@ def list_runs(
     limit: int = 20,
     action: str | None = None,
     q: str | None = None,
+    owner: str = "public",
 ) -> list[dict[str, Any]]:
-    where, params = _where(action, q)
+    where, params = _where(action, q, owner)
     with _db() as conn:
         rows = conn.execute(
             f"SELECT * FROM runs {where} ORDER BY created_at DESC LIMIT ?",
@@ -123,20 +131,27 @@ def list_runs(
     return [_row_to_run(row) for row in rows]
 
 
-def get_run(run_id: str) -> dict[str, Any] | None:
+def get_run(run_id: str, owner: str | None = None) -> dict[str, Any] | None:
     with _db() as conn:
-        row = conn.execute(
-            "SELECT * FROM runs WHERE id = ?",
-            (run_id,),
-        ).fetchone()
+        if owner is None:
+            row = conn.execute(
+                "SELECT * FROM runs WHERE id = ?",
+                (run_id,),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT * FROM runs WHERE id = ? AND owner = ?",
+                (run_id, owner),
+            ).fetchone()
     return _row_to_run(row) if row else None
 
 
 def get_stats(
     action: str | None = None,
     q: str | None = None,
+    owner: str = "public",
 ) -> dict[str, Any]:
-    where, params = _where(action, q)
+    where, params = _where(action, q, owner)
     with _db() as conn:
         total = conn.execute(
             f"SELECT COUNT(*) AS n FROM runs {where}", params
@@ -172,10 +187,11 @@ def get_dashboard(
     limit: int = 20,
     action: str | None = None,
     q: str | None = None,
+    owner: str = "public",
 ) -> dict[str, Any]:
     return {
-        "stats": get_stats(action, q),
-        "items": list_runs(limit, action, q),
+        "stats": get_stats(action, q, owner),
+        "items": list_runs(limit, action, q, owner),
     }
 
 

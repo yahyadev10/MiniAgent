@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { getUsername, setSession } from "@/lib/api";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: "◧" },
@@ -10,6 +12,7 @@ const NAV = [
   { href: "/history", label: "History", icon: "≣" },
   { href: "/files", label: "Files", icon: "⬇" },
   { href: "/system", label: "System", icon: "⚙" },
+  { href: "/login", label: "Account", icon: "◎" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -21,6 +24,11 @@ function isActive(pathname: string, href: string) {
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUsername(getUsername());
+  }, [pathname]);
 
   return (
     <div className="app">
@@ -78,9 +86,26 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="tag">Private LLM · LangGraph · MCP · FastAPI</div>
           </div>
-          <Link className="primary small" href="/new">
-            + New task
-          </Link>
+          <div className="actions">
+            {username ? (
+              <>
+                <span className="meta">{username}</span>
+                <button
+                  className="chip"
+                  type="button"
+                  onClick={() => {
+                    setSession(null, null);
+                    setUsername(null);
+                  }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : null}
+            <Link className="primary small" href="/new">
+              + New task
+            </Link>
+          </div>
         </header>
         <main className="content">{children}</main>
       </div>

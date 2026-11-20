@@ -1,0 +1,78 @@
+[
+  {
+    "name": "query_resolution",
+    "check": "resolve_query",
+    "input": "Gta 5",
+    "expected": "Grand Theft Auto V"
+  },
+  {
+    "name": "source_ranking",
+    "check": "rank_sources",
+    "input": "Grand Theft Auto V",
+    "sources": [
+      {
+        "title": "Steam Store — Grand Theft Auto V",
+        "url": "https://store.steampowered.com/app/271590/",
+        "snippet": "Buy Grand Theft Auto V on Steam."
+      },
+      {
+        "title": "Grand Theft Auto V - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Grand_Theft_Auto_V",
+        "snippet": "Grand Theft Auto V is a 2013 action-adventure game."
+      }
+    ],
+    "expected_url": "https://en.wikipedia.org/wiki/Grand_Theft_Auto_V"
+  },
+  {
+    "name": "weather_live_answer",
+    "check": "weather_answer",
+    "input": "weather in Paris",
+    "sources": [
+      {
+        "engine": "open-meteo",
+        "title": "Current weather in Paris",
+        "url": "https://open-meteo.com/",
+        "snippet": "Weather data",
+        "weather": {
+          "location": "Paris",
+          "current": {
+            "temperature": 21.3,
+            "apparent": 20.8,
+            "humidity": 61,
+            "wind": 8.1,
+            "precipitation": 0,
+            "condition": "Mainly clear",
+            "temperature_unit": "°C",
+            "wind_unit": "km/h",
+            "time": "2026-11-20T12:00"
+          },
+          "daily": []
+        }
+      }
+    ],
+    "expected_in": ["Paris", "21.3", "Mainly clear"]
+  },
+  {
+    "name": "research_prompt_structure",
+    "check": "prompt_structure",
+    "expected_in": ["Direct answer", "Key facts"]
+  },
+  {
+    "name": "citations_ranked",
+    "check": "citations",
+    "input": "Grand Theft Auto V",
+    "sources": [
+      {
+        "title": "Steam Store — Grand Theft Auto V",
+        "url": "https://store.steampowered.com/app/271590/",
+        "snippet": "Buy Grand Theft Auto V."
+      },
+      {
+        "title": "Grand Theft Auto V - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Grand_Theft_Auto_V",
+        "snippet": "Grand Theft Auto V is a 2013 game."
+      }
+    ],
+    "expected_url": "https://en.wikipedia.org/wiki/Grand_Theft_Auto_V"
+  }
+]

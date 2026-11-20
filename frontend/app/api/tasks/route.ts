@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { jsonHeaders } from "@/lib/server-api";
+
 const API_URL = process.env.API_URL ?? "http://localhost:8000/tasks";
 const MAX_DATA = 200_000;
 const MAX_FILENAME = 200;
@@ -129,7 +131,7 @@ export async function POST(request: Request) {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: jsonHeaders(request),
       body: JSON.stringify(outbound),
       cache: "no-store",
     });

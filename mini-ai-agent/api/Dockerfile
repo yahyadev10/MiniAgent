@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY api /app/api
 COPY agent /app/agent
 COPY mcp_servers /app/mcp_servers
+COPY evals /app/evals
 
 EXPOSE 8000
 

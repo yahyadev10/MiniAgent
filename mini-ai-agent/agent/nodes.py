@@ -9,6 +9,7 @@ from typing import Any, Awaitable, Callable
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
+from agent.citations import build_citations
 from agent.llm import classify_request, synthesize_research, topic_from_message
 from agent.state import AgentState
 
@@ -327,14 +328,17 @@ async def synthesize_node(state: AgentState) -> dict[str, Any]:
         )
         method = "fallback"
 
+    citations = build_citations(query, sources)
     report_args = {
         **state["report_args"],
         "title": state.get("report_args", {}).get("title") or query or "Report",
         "content": content,
         "sources": sources,
+        "citations": citations,
     }
     label = "local model" if method == "llm" else ("extracted" if sources else "best effort")
     return {
+        "citations": citations,
         "report_args": report_args,
         "results": [
             f"[synthesize] Answer prepared for '{query}' ({label}, {len(sources)} sources)."
