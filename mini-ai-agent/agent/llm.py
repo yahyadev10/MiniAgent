@@ -18,9 +18,9 @@ Read the user request and return ONLY a JSON object.
 
 Allowed actions:
 - "email": the user explicitly wants to send an email.
-- "report": the user explicitly wants to generate a report.
+- "report": the user wants a report, an analysis, an answer or a generated document.
 - "both": the user explicitly wants an email AND a report.
-- "unknown": the request is not about sending an email or generating a report.
+- "unknown": the request cannot be handled.
 
 Rules:
 - The user may write in English or French, with spelling mistakes.
@@ -28,9 +28,9 @@ Rules:
   "courriel" / "mail" mean email.
   "generate", "create", "write", "make" + report/summary/analysis mean report.
 - Only use "email", "report" or "both" when the request clearly asks for it.
-- Never invent an action. A question that is not about email or report (for
-  example "What is the weather today?") MUST be "unknown".
-- Do not turn a general question into a report.
+- A general question or a request for information MUST be "report" and the
+  agent will research it and generate the answer as a report.
+- Only use "unknown" when there is no actionable request.
 
 JSON shape:
 {"action": "email|report|both|unknown", "to": "", "subject": "", "body": "", "title": "", "content": ""}
@@ -137,7 +137,7 @@ def _fallback_action(message: str) -> str:
         return "both"
     if wants_email:
         return "email"
-    if wants_report:
+    if wants_report or _is_informational_query(message):
         return "report"
     return "unknown"
 
@@ -158,6 +158,23 @@ def _validate_action(action: str, message: str) -> str:
 def _extract_email(message: str) -> str:
     match = re.search(r"[\w.+-]+@[\w-]+\.[\w.-]+", message or "")
     return match.group(0) if match else ""
+
+
+_INFORMATIONAL_RE = re.compile(
+    r"^(?:what|who|when|where|why|how|which|tell me|give me|find|search|explain|"
+    r"show me|quelle|quels|quelles|quel|qui|quand|ou|pourquoi|comment|combien|"
+    r"donne moi|dis moi|explique|recherche|cherche|trouve|montre moi)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_informational_query(message: str) -> bool:
+    if _is_weather_query(message):
+        return True
+    text = _normalize(message).strip()
+    if "?" in (message or ""):
+        return True
+    return bool(_INFORMATIONAL_RE.match(text))
 
 
 def _topic_from_message(message: str) -> str:
@@ -283,7 +300,7 @@ def topic_from_message(message: str) -> str:
     return _topic_from_message(message)
 
 
-def _keyword_result(message: str) -> dict[str, Any]:
+def _keyword_result(message: str, force_action: str | None = None) -> dict[str, Any]:
     """Build a deterministic result when explicit keywords are present."""
     wants_email, wants_report = _detect_intents(message)
     if wants_email and wants_report:
@@ -293,7 +310,7 @@ def _keyword_result(message: str) -> dict[str, Any]:
     elif wants_report:
         action = "report"
     else:
-        action = "unknown"
+        action = force_action or "unknown"
 
     topic = _topic_from_message(message)
     report_title = topic or "Mini AI Agent Report"
@@ -314,9 +331,12 @@ def _keyword_result(message: str) -> dict[str, Any]:
 def classify_request(message: str) -> dict[str, Any]:
     """Classify a request, using fast deterministic keywords when possible."""
     wants_email, wants_report = _detect_intents(message)
+    informational = _is_informational_query(message)
 
-    if wants_email or wants_report:
-        result = _keyword_result(message)
+    if wants_email or wants_report or informational:
+        result = _keyword_result(
+            message, force_action="report" if informational else None
+        )
         logging.info(
             "Keyword classification %r -> %s (LLM skipped)", message, result["action"]
         )

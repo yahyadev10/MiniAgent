@@ -480,7 +480,11 @@ _WEATHER_STOPWORDS = {
     "tomorrow", "tonight", "current", "currently", "now", "in", "for", "at",
     "of", "please", "tell", "me", "how", "will", "be", "this", "week",
     "weekend", "weather", "forecast", "meteo", "météo", "temperature",
-    "temperatures", "rain", "snow",
+    "temperatures", "rain", "snow", "quel", "quels", "quelle", "quelles",
+    "est", "sont", "actuel", "actuelle", "actuels", "actuelles", "a", "en",
+    "la", "le", "les", "l", "un", "une", "de", "du", "des",
+    "au", "aux", "dans", "sur", "pour", "fait", "faire", "il", "y", "aujourdhui",
+    "maintenant", "prevision", "previsions", "prevision", "prévisions",
 }
 _WMO_LABELS = {
     0: "clear sky",
@@ -538,13 +542,25 @@ def _search_weather(query: str) -> list[dict[str, str]]:
     if not location:
         return []
     geo_url = "https://geocoding-api.open-meteo.com/v1/search?" + urllib.parse.urlencode(
-        {"name": location, "count": 1, "language": "en", "format": "json"}
+        {"name": location, "count": 8, "language": "en", "format": "json"}
     )
     try:
         geo = json.loads(
             _fetch(geo_url, timeout=15, attempts=2, accept="application/json")
         )
-        place = (geo.get("results") or [None])[0]
+        candidates = geo.get("results") or []
+        wanted = location.casefold().strip()
+        place = next(
+            (item for item in candidates if str(item.get("name", "")).casefold() == wanted),
+            None,
+        )
+        if place is None:
+            place = next(
+                (item for item in candidates if wanted in str(item.get("name", "")).casefold()),
+                None,
+            )
+        if place is None:
+            place = candidates[0] if candidates else None
     except Exception as exc:
         print(f"[WEATHER] geocoding failed for {location!r}: {exc}", flush=True)
         return []

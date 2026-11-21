@@ -355,6 +355,7 @@ async def stream_task(
 
         try:
             yield emit("start", {"message": _task_summary(request)})
+            yield emit("status", {"message": "Routing request"})
             final_state: dict[str, Any] = {
                 "steps": [],
                 "results": [],

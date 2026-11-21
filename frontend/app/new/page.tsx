@@ -173,6 +173,13 @@ function NewTaskForm() {
             setLive(["Task started"]);
             return;
           }
+          if (event === "status") {
+            setLive((current) => [
+              ...current,
+              (value as { message?: string })?.message ?? "Working…",
+            ]);
+            return;
+          }
           if (event === "step") {
             const data = value as {
               node?: string;
