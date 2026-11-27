@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import { apiFetch } from "@/lib/api";
+import { actionLabel, type TranslationKey } from "@/lib/i18n";
 import type { Capabilities } from "@/lib/types";
 
 type Health = { status?: string; detail?: string };
@@ -14,7 +16,15 @@ const SERVICES = [
   { name: "Ollama", url: "http://localhost:11434", port: 11434 },
 ];
 
+const STEP_KEYS: TranslationKey[] = [
+  "system.step1",
+  "system.step2",
+  "system.step3",
+  "system.step4",
+];
+
 export default function SystemPage() {
+  const { locale, t } = useI18n();
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +45,11 @@ export default function SystemPage() {
       setHealth(healthData as Health);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load system info");
+      setError(
+        err instanceof Error ? err.message : t("system.loadError"),
+      );
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -47,63 +59,75 @@ export default function SystemPage() {
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="eyebrow">System</p>
-          <h1>Runtime and capabilities</h1>
-          <p className="lede">
-            Everything runs locally with Docker. No cloud API key is required.
-          </p>
+          <p className="eyebrow">{t("system.eyebrow")}</p>
+          <h1>{t("system.title")}</h1>
+          <p className="lede">{t("system.lede")}</p>
         </div>
         <button className="ghost" type="button" onClick={() => void load()}>
-          Refresh
+          {t("common.refresh")}
         </button>
       </div>
 
-      {error ? <p className="error">Error: {error}</p> : null}
+      {error ? (
+        <p className="error">
+          {t("common.error")}: {error}
+        </p>
+      ) : null}
 
       <section className="split">
         <div className="card">
-          <h2>Agent</h2>
+          <h2>{t("system.agent")}</h2>
           <dl className="kv">
             <div>
-              <dt>API status</dt>
+              <dt>{t("system.apiStatus")}</dt>
               <dd>
                 <span
                   className={`status-dot ${
                     health?.status === "ok" ? "ok" : "bad"
                   }`}
                 />
-                {health?.status ?? health?.detail ?? "unknown"}
+                {health?.status ?? health?.detail ?? t("common.unknown")}
               </dd>
             </div>
             <div>
-              <dt>Version</dt>
+              <dt>{t("system.version")}</dt>
               <dd>{capabilities?.version ?? "—"}</dd>
             </div>
             <div>
-              <dt>Local model</dt>
+              <dt>{t("system.localModel")}</dt>
               <dd>{capabilities?.model ?? "—"}</dd>
             </div>
             <div>
-              <dt>Email mode</dt>
+              <dt>{t("system.emailMode")}</dt>
               <dd>
                 {capabilities?.email_mode === "smtp"
-                  ? "SMTP delivery"
-                  : "EML fallback (no SMTP configured)"}
+                  ? t("system.smtp")
+                  : t("system.eml")}
               </dd>
             </div>
             <div>
-              <dt>Actions</dt>
-              <dd>{capabilities?.actions.join(", ") ?? "—"}</dd>
+              <dt>{t("system.actions")}</dt>
+              <dd>
+                {capabilities?.actions
+                  .map((action) => actionLabel(locale, action))
+                  .join(", ") ?? "—"}
+              </dd>
             </div>
             <div>
-              <dt>Artifacts</dt>
-              <dd>{capabilities?.artifacts_total ?? 0} file(s)</dd>
+              <dt>{t("system.artifacts")}</dt>
+              <dd>
+                {t("common.fileCount", { count: capabilities?.artifacts_total ?? 0 })}
+              </dd>
             </div>
             <div>
-              <dt>Max dataset</dt>
+              <dt>{t("system.maxDataset")}</dt>
               <dd>
                 {capabilities
-                  ? `${capabilities.max_data_chars.toLocaleString("fr-FR")} chars`
+                  ? t("system.chars", {
+                      count: capabilities.max_data_chars.toLocaleString(
+                        locale === "fr" ? "fr-FR" : "en-GB",
+                      ),
+                    })
                   : "—"}
               </dd>
             </div>
@@ -111,7 +135,7 @@ export default function SystemPage() {
         </div>
 
         <div className="card">
-          <h2>Services</h2>
+          <h2>{t("system.services")}</h2>
           <div className="service-list">
             {SERVICES.map((service) => (
               <a
@@ -123,24 +147,20 @@ export default function SystemPage() {
               >
                 <span>{service.name}</span>
                 <span className="service-port">:{service.port}</span>
-                <span className="service-open">Open ↗</span>
+                <span className="service-open">{t("system.open")}</span>
               </a>
             ))}
           </div>
-          <p className="hint">
-            Airflow runs the scheduled workflow and calls the same API. History
-            is stored in SQLite inside the API volume.
-          </p>
+          <p className="hint">{t("system.hint")}</p>
         </div>
       </section>
 
       <section className="card">
-        <h2>How artifacts are produced</h2>
+        <h2>{t("system.how")}</h2>
         <ol className="steps">
-          <li>LangGraph classifies the request (or uses your explicit action).</li>
-          <li>The report MCP tool builds a PDF and an HTML file with ReportLab.</li>
-          <li>The email MCP tool sends via SMTP or writes a .eml fallback.</li>
-          <li>Files are written to the shared volume and linked in history.</li>
+          {STEP_KEYS.map((key) => (
+            <li key={key}>{t(key)}</li>
+          ))}
         </ol>
       </section>
     </div>

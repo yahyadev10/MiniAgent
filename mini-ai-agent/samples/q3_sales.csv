@@ -1,0 +1,91 @@
+order_id,date,region,city,sales_rep,product,category,channel,segment,units,unit_price,discount,gross_revenue,net_revenue,profit
+Q3-2026-0001,2026-07-01,North America,Toronto,Jonas Weber,Secure Connect License,Security,Online,Mid-Market,10,267.65,0.0,2676.5,2676.5,1175.36
+Q3-2026-0002,2026-07-02,LATAM,Santiago,Bob Chen,Orbit CRM Enterprise,Software,Online,Enterprise,2,777.36,0.0,1554.72,1554.72,515.71
+Q3-2026-0003,2026-07-03,LATAM,Bogota,Inez Costa,Orbit CRM Enterprise,Software,Online,Enterprise,8,722.23,0.05,5777.84,5488.95,2332.39
+Q3-2026-0004,2026-07-04,North America,Toronto,Jonas Weber,Pulse Dashboard,Software,Direct,Enterprise,9,167.07,0.15,1503.63,1278.09,519.82
+Q3-2026-0005,2026-07-05,Asia Pacific,Sydney,Bob Chen,Edge Gateway,Hardware,Online,Enterprise,8,477.43,0.1,3819.44,3437.5,1305.57
+Q3-2026-0006,2026-07-06,LATAM,Santiago,Hassan Ali,Secure Connect License,Security,Online,Enterprise,6,277.91,0.1,1667.46,1500.71,670.4
+Q3-2026-0007,2026-07-07,Europe,London,Jonas Weber,Atlas Analytics Pro,Software,Online,SMB,13,421.95,0.15,5485.35,4662.55,1391.6
+Q3-2026-0008,2026-07-08,Europe,Paris,Inez Costa,Data Share Add-on,Services,Direct,Mid-Market,13,148.7,0.1,1933.1,1739.79,710.9
+Q3-2026-0009,2026-07-09,Asia Pacific,Bangalore,Alice Martin,Nimbus Storage 5TB,Hardware,Direct,Enterprise,8,648.95,0.2,5191.6,4153.28,1364.05
+Q3-2026-0010,2026-07-10,LATAM,Santiago,Inez Costa,Nimbus Storage 1TB,Hardware,Partner,Mid-Market,16,225.59,0.15,3609.44,3068.02,1127.2
+Q3-2026-0011,2026-07-11,LATAM,Sao Paulo,Inez Costa,Pulse Dashboard,Software,Direct,Enterprise,7,178.48,0.2,1249.36,999.49,297.56
+Q3-2026-0012,2026-07-12,Europe,Madrid,Hassan Ali,Priority Support,Services,Direct,SMB,9,130.56,0.15,1175.04,998.78,327.56
+Q3-2026-0013,2026-07-13,LATAM,Mexico City,Inez Costa,Edge Gateway,Hardware,Reseller,SMB,16,469.46,0.0,7511.36,7511.36,2713.26
+Q3-2026-0014,2026-07-14,Europe,London,Frank Miller,Atlas Analytics Team,Software,Direct,Mid-Market,11,808.95,0.1,8898.45,8008.61,3621.06
+Q3-2026-0015,2026-07-15,LATAM,Mexico City,Inez Costa,Secure Connect License,Security,Direct,Mid-Market,5,258.6,0.0,1293.0,1293.0,585.07
+Q3-2026-0016,2026-07-16,Europe,London,Inez Costa,Guardian SSO,Security,Partner,Mid-Market,6,340.52,0.1,2043.12,1838.81,782.3
+Q3-2026-0017,2026-07-17,North America,Austin,Alice Martin,Atlas Analytics Team,Software,Direct,Mid-Market,2,949.42,0.15,1898.84,1614.01,554.59
+Q3-2026-0018,2026-07-18,Asia Pacific,Bangalore,Carla Ruiz,Nimbus Storage 1TB,Hardware,Direct,Mid-Market,16,221.83,0.1,3549.28,3194.35,1223.09
+Q3-2026-0019,2026-07-19,LATAM,Bogota,Grace Park,Edge Gateway,Hardware,Direct,Mid-Market,11,492.27,0.15,5414.97,4602.72,1346.35
+Q3-2026-0020,2026-07-20,Europe,Paris,David Okafor,Data Share Add-on,Services,Online,Mid-Market,10,162.93,0.0,1629.3,1629.3,588.71
+Q3-2026-0021,2026-07-21,North America,Chicago,Carla Ruiz,Data Share Add-on,Services,Direct,Enterprise,10,141.56,0.1,1415.6,1274.04,561.89
+Q3-2026-0022,2026-07-22,LATAM,Bogota,Carla Ruiz,Nimbus Storage 5TB,Hardware,Direct,SMB,10,678.14,0.0,6781.4,6781.4,2366.53
+Q3-2026-0023,2026-07-23,LATAM,Santiago,Bob Chen,Pulse Dashboard,Software,Online,Mid-Market,9,168.37,0.1,1515.33,1363.8,500.2
+Q3-2026-0024,2026-07-24,Asia Pacific,Singapore,Frank Miller,Orbit CRM Enterprise,Software,Online,Enterprise,5,684.75,0.0,3423.75,3423.75,1500.12
+Q3-2026-0025,2026-07-25,Europe,Paris,Inez Costa,Nimbus Storage 1TB,Hardware,Direct,Mid-Market,15,223.52,0.1,3352.8,3017.52,1218.14
+Q3-2026-0026,2026-07-26,Asia Pacific,Tokyo,Bob Chen,Guardian SSO,Security,Partner,SMB,6,344.27,0.15,2065.62,1755.78,667.25
+Q3-2026-0027,2026-07-27,LATAM,Mexico City,Carla Ruiz,Atlas Analytics Team,Software,Online,SMB,12,811.76,0.05,9741.12,9254.06,3794.39
+Q3-2026-0028,2026-07-28,Asia Pacific,Sydney,Emma Dubois,Guardian SSO,Security,Direct,Mid-Market,15,310.35,0.05,4655.25,4422.49,1366.77
+Q3-2026-0029,2026-07-29,Asia Pacific,Bangalore,Bob Chen,Atlas Analytics Pro,Software,Online,Mid-Market,2,386.1,0.0,772.2,772.2,259.29
+Q3-2026-0030,2026-07-30,Asia Pacific,Sydney,Grace Park,Edge Gateway,Hardware,Direct,SMB,11,533.08,0.15,5863.88,4984.3,1947.5
+Q3-2026-0031,2026-08-01,LATAM,Santiago,Emma Dubois,Data Share Add-on,Services,Direct,Enterprise,16,138.58,0.05,2217.28,2106.42,916.36
+Q3-2026-0032,2026-08-02,Asia Pacific,Singapore,Frank Miller,Priority Support,Services,Direct,Enterprise,13,118.48,0.0,1540.24,1540.24,509.29
+Q3-2026-0033,2026-08-03,North America,Toronto,Frank Miller,Nimbus Storage 5TB,Hardware,Direct,SMB,7,701.81,0.0,4912.67,4912.67,1854.97
+Q3-2026-0034,2026-08-04,North America,Chicago,Jonas Weber,Guardian SSO,Security,Online,Mid-Market,3,314.04,0.0,942.12,942.12,352.41
+Q3-2026-0035,2026-08-05,North America,Austin,Grace Park,Guardian SSO,Security,Online,Enterprise,4,330.21,0.1,1320.84,1188.76,413.56
+Q3-2026-0036,2026-08-06,Europe,Paris,Emma Dubois,Data Share Add-on,Services,Partner,SMB,13,163.04,0.15,2119.52,1801.59,684.39
+Q3-2026-0037,2026-08-07,North America,Toronto,Jonas Weber,Secure Connect License,Security,Direct,SMB,9,255.73,0.05,2301.57,2186.49,666.79
+Q3-2026-0038,2026-08-08,North America,Toronto,Alice Martin,Nimbus Storage 1TB,Hardware,Online,SMB,12,240.98,0.15,2891.76,2458.0,828.71
+Q3-2026-0039,2026-08-09,North America,Chicago,Grace Park,Data Share Add-on,Services,Partner,Mid-Market,10,160.86,0.15,1608.6,1367.31,605.84
+Q3-2026-0040,2026-08-10,Europe,Berlin,Hassan Ali,Nimbus Storage 1TB,Hardware,Online,Mid-Market,15,225.65,0.05,3384.75,3215.51,1166.16
+Q3-2026-0041,2026-08-11,Asia Pacific,Tokyo,Frank Miller,Orbit CRM Standard,Software,Partner,Enterprise,12,304.45,0.1,3653.4,3288.06,1449.65
+Q3-2026-0042,2026-08-12,LATAM,Sao Paulo,Emma Dubois,Data Share Add-on,Services,Direct,Enterprise,4,137.53,0.05,550.12,522.61,197.76
+Q3-2026-0043,2026-08-13,North America,Chicago,Grace Park,Priority Support,Services,Online,Enterprise,11,115.36,0.0,1268.96,1268.96,573.57
+Q3-2026-0044,2026-08-14,Europe,Paris,Emma Dubois,Atlas Analytics Team,Software,Direct,Mid-Market,4,931.4,0.05,3725.6,3539.32,1339.8
+Q3-2026-0045,2026-08-15,Europe,London,Grace Park,Pulse Dashboard,Software,Direct,Enterprise,6,181.48,0.05,1088.88,1034.44,314.59
+Q3-2026-0046,2026-08-16,North America,Austin,Inez Costa,Nimbus Storage 5TB,Hardware,Direct,Mid-Market,7,733.07,0.2,5131.49,4105.19,1872.89
+Q3-2026-0047,2026-08-17,Europe,Berlin,Alice Martin,Secure Connect License,Security,Partner,SMB,4,242.52,0.0,970.08,970.08,361.55
+Q3-2026-0048,2026-08-18,Asia Pacific,Tokyo,Frank Miller,Secure Connect License,Security,Online,Enterprise,4,265.17,0.0,1060.68,1060.68,321.15
+Q3-2026-0049,2026-08-19,North America,Austin,Hassan Ali,Pulse Dashboard,Software,Direct,Mid-Market,11,172.85,0.0,1901.35,1901.35,651.41
+Q3-2026-0050,2026-08-20,Asia Pacific,Bangalore,Hassan Ali,Guardian SSO,Security,Partner,SMB,7,311.61,0.2,2181.27,1745.02,795.0
+Q3-2026-0051,2026-08-21,Europe,London,Hassan Ali,Nimbus Storage 1TB,Hardware,Online,SMB,8,240.3,0.05,1922.4,1826.28,617.44
+Q3-2026-0052,2026-08-22,LATAM,Mexico City,Jonas Weber,Priority Support,Services,Direct,SMB,16,116.37,0.2,1861.92,1489.54,510.94
+Q3-2026-0053,2026-08-23,Europe,Madrid,Hassan Ali,Pulse Dashboard,Software,Direct,Mid-Market,7,192.08,0.05,1344.56,1277.33,418.92
+Q3-2026-0054,2026-08-24,Asia Pacific,Tokyo,Jonas Weber,Nimbus Storage 1TB,Hardware,Online,Mid-Market,4,242.94,0.0,971.76,971.76,318.95
+Q3-2026-0055,2026-08-25,North America,Toronto,Hassan Ali,Data Share Add-on,Services,Reseller,Enterprise,8,145.11,0.15,1160.88,986.75,412.55
+Q3-2026-0056,2026-08-26,Europe,Madrid,Alice Martin,Nimbus Storage 1TB,Hardware,Direct,Enterprise,12,231.86,0.1,2782.32,2504.09,1027.67
+Q3-2026-0057,2026-08-27,Europe,Berlin,Hassan Ali,Guardian SSO,Security,Partner,Mid-Market,12,347.6,0.2,4171.2,3336.96,1401.78
+Q3-2026-0058,2026-08-28,North America,New York,Frank Miller,Orbit CRM Enterprise,Software,Direct,SMB,12,702.37,0.2,8428.44,6742.75,3031.27
+Q3-2026-0059,2026-08-29,LATAM,Bogota,Inez Costa,Guardian SSO,Security,Partner,Enterprise,12,331.12,0.1,3973.44,3576.1,1447.03
+Q3-2026-0060,2026-08-30,Europe,Berlin,Emma Dubois,Orbit CRM Enterprise,Software,Direct,Mid-Market,9,715.37,0.15,6438.33,5472.58,1700.55
+Q3-2026-0061,2026-09-01,Europe,Paris,Inez Costa,Atlas Analytics Pro,Software,Reseller,Enterprise,6,456.88,0.0,2741.28,2741.28,858.97
+Q3-2026-0062,2026-09-02,LATAM,Bogota,Frank Miller,Nimbus Storage 1TB,Hardware,Partner,SMB,7,231.26,0.1,1618.82,1456.94,474.91
+Q3-2026-0063,2026-09-03,LATAM,Mexico City,Hassan Ali,Atlas Analytics Pro,Software,Direct,SMB,9,445.95,0.05,4013.55,3812.87,1641.72
+Q3-2026-0064,2026-09-04,LATAM,Bogota,Inez Costa,Orbit CRM Enterprise,Software,Online,Enterprise,11,692.24,0.1,7614.64,6853.18,2983.38
+Q3-2026-0065,2026-09-05,Asia Pacific,Bangalore,Hassan Ali,Guardian SSO,Security,Direct,Mid-Market,3,364.01,0.1,1092.03,982.83,380.6
+Q3-2026-0066,2026-09-06,Europe,Paris,Inez Costa,Secure Connect License,Security,Online,Mid-Market,15,275.49,0.2,4132.35,3305.88,1078.87
+Q3-2026-0067,2026-09-07,North America,Chicago,Inez Costa,Atlas Analytics Pro,Software,Direct,SMB,9,398.24,0.1,3584.16,3225.74,1198.19
+Q3-2026-0068,2026-09-08,Asia Pacific,Bangalore,Grace Park,Orbit CRM Standard,Software,Online,Enterprise,10,321.07,0.2,3210.7,2568.56,869.81
+Q3-2026-0069,2026-09-09,Europe,London,Carla Ruiz,Guardian SSO,Security,Partner,Enterprise,10,353.93,0.0,3539.3,3539.3,1455.27
+Q3-2026-0070,2026-09-10,North America,New York,Emma Dubois,Pulse Dashboard,Software,Reseller,Mid-Market,14,172.78,0.2,2418.92,1935.14,604.18
+Q3-2026-0071,2026-09-11,Europe,Madrid,Carla Ruiz,Orbit CRM Standard,Software,Online,Mid-Market,4,321.96,0.2,1287.84,1030.27,322.9
+Q3-2026-0072,2026-09-12,North America,Toronto,Grace Park,Orbit CRM Enterprise,Software,Direct,Mid-Market,10,739.35,0.1,7393.5,6654.15,1973.34
+Q3-2026-0073,2026-09-13,North America,Austin,Emma Dubois,Atlas Analytics Pro,Software,Direct,SMB,2,385.95,0.1,771.9,694.71,300.04
+Q3-2026-0074,2026-09-14,Europe,Paris,David Okafor,Nimbus Storage 5TB,Hardware,Direct,Enterprise,12,680.77,0.2,8169.24,6535.39,2820.19
+Q3-2026-0075,2026-09-15,Europe,Berlin,Hassan Ali,Orbit CRM Standard,Software,Partner,Enterprise,10,340.5,0.1,3405.0,3064.5,1255.83
+Q3-2026-0076,2026-09-16,Asia Pacific,Bangalore,Bob Chen,Secure Connect License,Security,Partner,Mid-Market,11,259.05,0.0,2849.55,2849.55,1176.95
+Q3-2026-0077,2026-09-17,Europe,Paris,Grace Park,Orbit CRM Standard,Software,Direct,Enterprise,5,318.75,0.0,1593.75,1593.75,704.29
+Q3-2026-0078,2026-09-18,Asia Pacific,Sydney,Emma Dubois,Priority Support,Services,Partner,Mid-Market,7,117.56,0.1,822.92,740.63,276.84
+Q3-2026-0079,2026-09-19,Europe,Paris,Jonas Weber,Orbit CRM Standard,Software,Online,SMB,10,292.8,0.05,2928.0,2781.6,1007.17
+Q3-2026-0080,2026-09-20,Asia Pacific,Sydney,Inez Costa,Data Share Add-on,Services,Partner,Enterprise,3,148.83,0.05,446.49,424.17,160.46
+Q3-2026-0081,2026-09-21,Asia Pacific,Sydney,Hassan Ali,Atlas Analytics Pro,Software,Online,Mid-Market,3,427.58,0.0,1282.74,1282.74,481.0
+Q3-2026-0082,2026-09-22,LATAM,Santiago,Bob Chen,Secure Connect License,Security,Direct,SMB,2,241.96,0.05,483.92,459.72,139.84
+Q3-2026-0083,2026-09-23,Asia Pacific,Singapore,Bob Chen,Atlas Analytics Pro,Software,Partner,Enterprise,13,459.54,0.2,5974.02,4779.22,1856.02
+Q3-2026-0084,2026-09-24,Asia Pacific,Tokyo,David Okafor,Pulse Dashboard,Software,Online,Mid-Market,9,170.71,0.15,1536.39,1305.93,576.43
+Q3-2026-0085,2026-09-25,Asia Pacific,Bangalore,Bob Chen,Atlas Analytics Pro,Software,Online,Mid-Market,9,398.93,0.0,3590.37,3590.37,1288.71
+Q3-2026-0086,2026-09-26,LATAM,Sao Paulo,Carla Ruiz,Edge Gateway,Hardware,Direct,Enterprise,5,508.01,0.0,2540.05,2540.05,953.32
+Q3-2026-0087,2026-09-27,Asia Pacific,Sydney,Inez Costa,Nimbus Storage 5TB,Hardware,Direct,Mid-Market,15,722.47,0.0,10837.05,10837.05,3723.88
+Q3-2026-0088,2026-09-28,Asia Pacific,Tokyo,Bob Chen,Guardian SSO,Security,Partner,Enterprise,3,343.72,0.1,1031.16,928.04,327.57
+Q3-2026-0089,2026-09-29,LATAM,Santiago,Carla Ruiz,Atlas Analytics Pro,Software,Online,Enterprise,5,394.52,0.05,1972.6,1873.97,778.29
+Q3-2026-0090,2026-09-30,North America,Toronto,Inez Costa,Orbit CRM Standard,Software,Direct,Mid-Market,16,335.51,0.0,5368.16,5368.16,2185.89

@@ -4,15 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import { getUsername, setSession } from "@/lib/api";
+import type { TranslationKey } from "@/lib/i18n";
 
-const NAV = [
-  { href: "/", label: "Dashboard", icon: "◧" },
-  { href: "/new", label: "New task", icon: "✦" },
-  { href: "/history", label: "History", icon: "≣" },
-  { href: "/files", label: "Files", icon: "⬇" },
-  { href: "/system", label: "System", icon: "⚙" },
-  { href: "/login", label: "Account", icon: "◎" },
+const NAV: { href: string; label: TranslationKey; icon: string }[] = [
+  { href: "/", label: "nav.dashboard", icon: "◧" },
+  { href: "/new", label: "nav.newTask", icon: "✦" },
+  { href: "/history", label: "nav.history", icon: "≣" },
+  { href: "/files", label: "nav.files", icon: "⬇" },
+  { href: "/system", label: "nav.system", icon: "⚙" },
+  { href: "/login", label: "nav.account", icon: "◎" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -24,6 +26,7 @@ function isActive(pathname: string, href: string) {
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { locale, toggleLocale, t } = useI18n();
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,14 +52,14 @@ export default function AppShell({ children }: { children: ReactNode }) {
               className={`nav-link ${isActive(pathname, item.href) ? "active" : ""}`}
             >
               <span className="nav-icon">{item.icon}</span>
-              {item.label}
+              {t(item.label)}
             </Link>
           ))}
         </nav>
 
         <div className="sidebar-foot">
           <span className="live">
-            <span className="live-dot" /> local &amp; private
+            <span className="live-dot" /> {t("sidebar.localPrivate")}
           </span>
           <a
             className="sidebar-link"
@@ -64,7 +67,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             target="_blank"
             rel="noreferrer"
           >
-            API docs ↗
+            {t("sidebar.apiDocs")} ↗
           </a>
           <a
             className="sidebar-link"
@@ -72,7 +75,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             target="_blank"
             rel="noreferrer"
           >
-            Airflow ↗
+            {t("sidebar.airflow")} ↗
           </a>
         </div>
       </aside>
@@ -81,12 +84,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <header className="topbar">
           <div>
             <div className="crumb">
-              {NAV.find((item) => isActive(pathname, item.href))?.label ??
-                "Mini AI"}
+              {NAV.find((item) => isActive(pathname, item.href))
+                ? t(NAV.find((item) => isActive(pathname, item.href))!.label)
+                : t("app.name")}
             </div>
-            <div className="tag">Private LLM · LangGraph · MCP · FastAPI</div>
+            <div className="tag">{t("tagline")}</div>
           </div>
           <div className="actions">
+            <button
+              className="chip"
+              type="button"
+              onClick={toggleLocale}
+              aria-label={t("lang.switch")}
+            >
+              {locale === "fr" ? "EN" : "FR"}
+            </button>
             {username ? (
               <>
                 <span className="meta">{username}</span>
@@ -98,12 +110,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     setUsername(null);
                   }}
                 >
-                  Logout
+                  {t("common.logout")}
                 </button>
               </>
             ) : null}
             <Link className="primary small" href="/new">
-              + New task
+              {t("common.newTask")}
             </Link>
           </div>
         </header>

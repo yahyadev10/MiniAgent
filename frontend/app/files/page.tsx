@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import { apiFetch } from "@/lib/api";
+import type { TranslationKey } from "@/lib/i18n";
 import {
   artifactHref,
   formatBytes,
@@ -10,13 +12,14 @@ import {
   type FileInfo,
 } from "@/lib/types";
 
-const KIND_LABEL: Record<string, string> = {
-  pdf: "PDF report",
-  html: "HTML report",
-  eml: "Email file",
+const KIND_LABEL: Record<string, TranslationKey> = {
+  pdf: "files.kindPdf",
+  html: "files.kindHtml",
+  eml: "files.kindEml",
 };
 
 export default function FilesPage() {
+  const { locale, t } = useI18n();
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +35,11 @@ export default function FilesPage() {
       setFiles(data as FileInfo[]);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load files");
+      setError(err instanceof Error ? err.message : t("files.loadError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -51,44 +54,45 @@ export default function FilesPage() {
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="eyebrow">Files</p>
-          <h1>Artifact library</h1>
-          <p className="lede">
-            Every PDF, HTML report and .eml email produced by the agent, ready to
-            download.
-          </p>
+          <p className="eyebrow">{t("files.eyebrow")}</p>
+          <h1>{t("files.title")}</h1>
+          <p className="lede">{t("files.lede")}</p>
         </div>
         <button className="ghost" type="button" onClick={() => void load()}>
-          Refresh
+          {t("common.refresh")}
         </button>
       </div>
 
       <section className="stats">
         <div className="stat">
           <span className="stat-value">{files.length}</span>
-          <span className="stat-label">Total files</span>
+          <span className="stat-label">{t("files.total")}</span>
         </div>
         <div className="stat">
           <span className="stat-value">{counts.pdf ?? 0}</span>
-          <span className="stat-label">PDF</span>
+          <span className="stat-label">{t("files.pdf")}</span>
         </div>
         <div className="stat">
           <span className="stat-value">{counts.html ?? 0}</span>
-          <span className="stat-label">HTML</span>
+          <span className="stat-label">{t("files.html")}</span>
         </div>
         <div className="stat">
           <span className="stat-value">{counts.eml ?? 0}</span>
-          <span className="stat-label">EML</span>
+          <span className="stat-label">{t("files.eml")}</span>
         </div>
       </section>
 
-      {error ? <p className="error">Error: {error}</p> : null}
+      {error ? (
+        <p className="error">
+          {t("common.error")}: {error}
+        </p>
+      ) : null}
 
       {loading ? (
-        <p className="hint">Loading files…</p>
+        <p className="hint">{t("files.loading")}</p>
       ) : files.length === 0 ? (
         <section className="card empty">
-          <p>No artifacts yet. Run a report or email task first.</p>
+          <p>{t("files.empty")}</p>
         </section>
       ) : (
         <section className="file-grid">
@@ -99,12 +103,13 @@ export default function FilesPage() {
               href={artifactHref(file.filename)}
             >
               <span className="artifact-kind">{file.kind}</span>
-              <strong>{KIND_LABEL[file.kind] ?? file.kind}</strong>
+              <strong>{t(KIND_LABEL[file.kind] ?? "files.total")}</strong>
               <span className="file-name">{file.filename}</span>
               <span className="file-meta">
-                {formatBytes(file.size)} · {formatTime(file.modified_at)}
+                {formatBytes(file.size, locale)} ·{" "}
+                {formatTime(file.modified_at, locale)}
               </span>
-              <em>Download →</em>
+              <em>{t("common.download")} →</em>
             </a>
           ))}
         </section>

@@ -388,11 +388,22 @@ def _page_text(url: str, limit: int = 2200) -> str:
         return ""
 
 
+_QUERY_ALIASES = {
+    "gta 5": "Grand Theft Auto V",
+    "gta v": "Grand Theft Auto V",
+    "gtav": "Grand Theft Auto V",
+    "grand theft auto 5": "Grand Theft Auto V",
+}
+
+
 def _resolve_query(query: str) -> str:
     """Expand short/ambiguous entity queries with Wikipedia's canonical title."""
     words = query.split()
     if not words or len(words) > 6:
         return query
+    normalized = re.sub(r"[^a-z0-9]+", " ", query.lower()).strip()
+    if normalized in _QUERY_ALIASES:
+        return _QUERY_ALIASES[normalized]
     if re.search(
         r"\b(weather|forecast|news|price|stock|who|what|when|where|why|how)\b",
         query,

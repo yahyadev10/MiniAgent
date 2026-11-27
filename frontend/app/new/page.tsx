@@ -3,8 +3,10 @@
 import { ChangeEvent, FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { useI18n } from "@/components/LanguageProvider";
 import RunView from "@/components/RunView";
 import { apiFetch, streamTask } from "@/lib/api";
+import { actionLabel, statusLabel } from "@/lib/i18n";
 import {
   ACTIONS,
   formatBytes,
@@ -24,32 +26,8 @@ type Example = {
   content?: string;
 };
 
-const EXAMPLES: Example[] = [
-  {
-    label: "Email",
-    action: "email",
-    to: "john@example.com",
-    subject: "Project update",
-    body: "Hello John,\n\nThe Q3 analysis is ready. Let me know if you need the raw data.\n\nBest,",
-  },
-  {
-    label: "Report",
-    action: "report",
-    title: "Q3 sales report",
-    content: "Summarize the uploaded data and highlight the strongest columns.",
-  },
-  {
-    label: "Email + report",
-    action: "both",
-    to: "john@example.com",
-    subject: "Q3 report attached",
-    body: "Hello John,\n\nPlease find the Q3 report attached.\n\nBest,",
-    title: "Q3 sales report",
-    content: "Summarize the uploaded data and highlight the strongest columns.",
-  },
-];
-
 function NewTaskForm() {
+  const { locale, t } = useI18n();
   const searchParams = useSearchParams();
   const requested = searchParams.get("action");
   const initialAction = ACTIONS.some((item) => item.value === requested)
@@ -77,6 +55,31 @@ function NewTaskForm() {
   const wantsEmail = action === "email" || action === "both";
   const wantsReport = action === "report" || action === "both";
 
+  const examples: Example[] = [
+    {
+      label: t("action.email"),
+      action: "email",
+      to: "john@example.com",
+      subject: t("new.subjectPlaceholder"),
+      body: t("new.exampleEmailBody"),
+    },
+    {
+      label: t("action.report"),
+      action: "report",
+      title: t("new.titlePlaceholder"),
+      content: t("new.contentPlaceholder"),
+    },
+    {
+      label: t("action.both"),
+      action: "both",
+      to: "john@example.com",
+      subject: t("new.titlePlaceholder"),
+      body: t("new.exampleBothBody"),
+      title: t("new.titlePlaceholder"),
+      content: t("new.contentPlaceholder"),
+    },
+  ];
+
   async function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -88,18 +91,18 @@ function NewTaskForm() {
     const dot = file.name.lastIndexOf(".");
     const extension = dot >= 0 ? file.name.slice(dot).toLowerCase() : "";
     if (!ALLOWED_EXTENSIONS.includes(extension)) {
-      setFileError("Accepted formats: CSV, TSV, TXT, JSON, MD.");
+      setFileError(t("new.errFormats"));
       return;
     }
     if (file.size > MAX_UPLOAD) {
-      setFileError("File too large (200 KB max).");
+      setFileError(t("new.errTooLarge"));
       return;
     }
 
     try {
       const text = await file.text();
       if (text.length > MAX_UPLOAD) {
-        setFileError("Content too large (200,000 characters max).");
+        setFileError(t("new.errContentTooLarge"));
         return;
       }
       setFileData(text);
@@ -107,7 +110,7 @@ function NewTaskForm() {
       setFileSize(file.size);
       setFileError(null);
     } catch {
-      setFileError("Unable to read this file.");
+      setFileError(t("new.errRead"));
     }
   }
 
@@ -119,7 +122,7 @@ function NewTaskForm() {
   }
 
   function applyExample(index: number) {
-    const example = EXAMPLES[index];
+    const example = examples[index];
     setAction(example.action);
     setTo(example.to ?? "");
     setSubject(example.subject ?? "");
@@ -137,11 +140,11 @@ function NewTaskForm() {
     }
 
     if (action === "auto" && !message.trim()) {
-      setError("Describe the task in the message field.");
+      setError(t("new.errDescribe"));
       return;
     }
     if (wantsEmail && !to.trim()) {
-      setError("A recipient is required to send an email.");
+      setError(t("new.errRecipient"));
       return;
     }
 
@@ -170,13 +173,16 @@ function NewTaskForm() {
       if (!fileData) {
         await streamTask(payload, (event, value) => {
           if (event === "start") {
-            setLive(["Task started"]);
+            setLive([t("new.started")]);
             return;
           }
           if (event === "status") {
             setLive((current) => [
               ...current,
-              (value as { message?: string })?.message ?? "Working…",
+              statusLabel(
+                locale,
+                (value as { message?: string })?.message ?? t("new.working"),
+              ),
             ]);
             return;
           }
@@ -190,7 +196,9 @@ function NewTaskForm() {
             );
             setLive((current) => [
               ...current,
-              ...(messages.length ? messages : [`${data.node ?? "node"} updated`]),
+              ...(messages.length
+                ? messages
+                : [t("new.nodeUpdated", { node: data.node ?? "node" })]),
             ]);
             return;
           }
@@ -200,7 +208,7 @@ function NewTaskForm() {
           }
           if (event === "error") {
             throw new Error(
-              (value as { error?: string })?.error ?? "Stream failed",
+              (value as { error?: string })?.error ?? t("new.streamFailed"),
             );
           }
         });
@@ -219,7 +227,7 @@ function NewTaskForm() {
         .getElementById("result")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : t("new.unknownError"));
     } finally {
       setLoading(false);
     }
@@ -229,19 +237,16 @@ function NewTaskForm() {
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="eyebrow">New task</p>
-          <h1>Compose a real task</h1>
-          <p className="lede">
-            Pick an action, fill the fields you care about, and optionally attach
-            a dataset for the report.
-          </p>
+          <p className="eyebrow">{t("new.eyebrow")}</p>
+          <h1>{t("new.title")}</h1>
+          <p className="lede">{t("new.lede")}</p>
         </div>
       </div>
 
       <form className="card form" onSubmit={onSubmit}>
         <div className="form-grid">
           <div className="field">
-            <label htmlFor="action">Action</label>
+            <label htmlFor="action">{t("new.action")}</label>
             <select
               id="action"
               className="input"
@@ -251,16 +256,16 @@ function NewTaskForm() {
             >
               {ACTIONS.map((item) => (
                 <option key={item.value} value={item.value}>
-                  {item.label}
+                  {actionLabel(locale, item.value)}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="field">
-            <label>Examples</label>
+            <label>{t("new.examples")}</label>
             <div className="actions">
-              {EXAMPLES.map((example, index) => (
+              {examples.map((example, index) => (
                 <button
                   key={example.label}
                   className="chip"
@@ -277,26 +282,24 @@ function NewTaskForm() {
 
         {action === "auto" ? (
           <div className="field">
-            <label htmlFor="message">Message</label>
+            <label htmlFor="message">{t("new.message")}</label>
             <textarea
               id="message"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              placeholder="Ex: Send an email to John and generate a report about Q3 sales"
+              placeholder={t("new.messagePlaceholder")}
               disabled={loading}
             />
-            <span className="hint">
-              The local LLM classifies this text and extracts the fields.
-            </span>
+            <span className="hint">{t("new.messageHint")}</span>
           </div>
         ) : null}
 
         {wantsEmail ? (
           <fieldset className="fieldset">
-            <legend>Email</legend>
+            <legend>{t("new.email")}</legend>
             <div className="form-grid">
               <div className="field">
-                <label htmlFor="to">To</label>
+                <label htmlFor="to">{t("new.to")}</label>
                 <input
                   id="to"
                   className="input"
@@ -309,24 +312,24 @@ function NewTaskForm() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="subject">Subject</label>
+                <label htmlFor="subject">{t("new.subject")}</label>
                 <input
                   id="subject"
                   className="input"
                   value={subject}
                   onChange={(event) => setSubject(event.target.value)}
-                  placeholder="Project update"
+                  placeholder={t("new.subjectPlaceholder")}
                   disabled={loading}
                 />
               </div>
             </div>
             <div className="field">
-              <label htmlFor="body">Body</label>
+              <label htmlFor="body">{t("new.body")}</label>
               <textarea
                 id="body"
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
-                placeholder="Hello John, ..."
+                placeholder={t("new.bodyPlaceholder")}
                 disabled={loading}
               />
             </div>
@@ -335,25 +338,25 @@ function NewTaskForm() {
 
         {wantsReport ? (
           <fieldset className="fieldset">
-            <legend>Report</legend>
+            <legend>{t("new.report")}</legend>
             <div className="field">
-              <label htmlFor="title">Title</label>
+              <label htmlFor="title">{t("new.titleField")}</label>
               <input
                 id="title"
                 className="input"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Q3 sales report"
+                placeholder={t("new.titlePlaceholder")}
                 disabled={loading}
               />
             </div>
             <div className="field">
-              <label htmlFor="content">Content / instructions</label>
+              <label htmlFor="content">{t("new.content")}</label>
               <textarea
                 id="content"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="Summarize the uploaded data and highlight key numbers."
+                placeholder={t("new.contentPlaceholder")}
                 disabled={loading}
               />
             </div>
@@ -361,7 +364,7 @@ function NewTaskForm() {
         ) : null}
 
         <fieldset className="fieldset">
-          <legend>Dataset (optional)</legend>
+          <legend>{t("new.dataset")}</legend>
           <div className="file-row">
             <input
               id="data-file"
@@ -377,13 +380,13 @@ function NewTaskForm() {
                 onClick={clearFile}
                 disabled={loading}
               >
-                Remove {fileName} ({formatBytes(fileSize)})
+                {t("new.remove", {
+                  name: fileName,
+                  size: formatBytes(fileSize, locale),
+                })}
               </button>
             ) : (
-              <span className="hint">
-                CSV, TSV, TXT, JSON or MD — 200 KB max. Used for charts and the
-                numeric summary.
-              </span>
+              <span className="hint">{t("new.datasetHint")}</span>
             )}
           </div>
           {fileError ? <p className="error">{fileError}</p> : null}
@@ -395,18 +398,20 @@ function NewTaskForm() {
         <div className="actions">
           <button className="primary" type="submit" disabled={loading}>
             {loading ? <span className="spinner" /> : null}
-            {loading ? "Running…" : "Run task"}
+            {loading ? t("new.running") : t("new.run")}
           </button>
-          <span className="hint">
-            Artifacts are stored server-side and listed under Files.
-          </span>
+          <span className="hint">{t("new.artifactsHint")}</span>
         </div>
-        {error ? <p className="error">Error: {error}</p> : null}
+        {error ? (
+          <p className="error">
+            {t("common.error")}: {error}
+          </p>
+        ) : null}
       </form>
 
       {live.length ? (
         <section className="card">
-          <h2>Live progress</h2>
+          <h2>{t("new.live")}</h2>
           <pre className="preview">{live.join("\n")}</pre>
         </section>
       ) : null}
@@ -416,7 +421,7 @@ function NewTaskForm() {
           <RunView run={run} />
         ) : (
           <section className="card empty">
-            <p>Run a task to see its trace and downloadable artifacts here.</p>
+            <p>{t("new.empty")}</p>
           </section>
         )}
       </div>
@@ -425,8 +430,9 @@ function NewTaskForm() {
 }
 
 export default function NewTaskPage() {
+  const { t } = useI18n();
   return (
-    <Suspense fallback={<p className="hint">Loading form…</p>}>
+    <Suspense fallback={<p className="hint">{t("common.loading")}</p>}>
       <NewTaskForm />
     </Suspense>
   );

@@ -1,7 +1,8 @@
 "use client";
 
+import { useI18n } from "@/components/LanguageProvider";
+import { actionLabel } from "@/lib/i18n";
 import {
-  ACTION_LABEL,
   artifactHref,
   formatBytes,
   formatMs,
@@ -10,25 +11,26 @@ import {
 } from "@/lib/types";
 
 export default function RunView({ run }: { run: Run }) {
+  const { locale, t } = useI18n();
   const savedEmail = run.artifacts.some((artifact) => artifact.kind === "eml");
 
   return (
     <section className="card">
       <div className="result-head">
         <span className={`badge badge-${run.action}`}>
-          {ACTION_LABEL[run.action] ?? run.action}
+          {actionLabel(locale, run.action)}
         </span>
         <span className="meta">#{run.id}</span>
         <span className="meta">{formatMs(run.duration_ms)}</span>
-        <span className="meta">{formatTime(run.created_at)}</span>
+        <span className="meta">{formatTime(run.created_at, locale)}</span>
         <a className="download" href={`/api/report/${run.id}`}>
-          Report .md
+          {t("run.report")}
         </a>
       </div>
 
       <p className="run-message">{run.message}</p>
 
-      <h3 className="panel-title">Execution trace</h3>
+      <h3 className="panel-title">{t("run.trace")}</h3>
       <ol className="timeline">
         {run.steps.map((step, index) => (
           <li key={`${step.node}-${index}`} className="timeline-item">
@@ -42,9 +44,9 @@ export default function RunView({ run }: { run: Run }) {
         ))}
       </ol>
 
-      <h3 className="panel-title">Results</h3>
+      <h3 className="panel-title">{t("run.results")}</h3>
       {run.results.length === 0 ? (
-        <p className="hint">No tool output for this run.</p>
+        <p className="hint">{t("run.noOutput")}</p>
       ) : (
         run.results.map((result, index) => (
           <pre key={`${index}-${result.slice(0, 24)}`}>{result}</pre>
@@ -53,7 +55,7 @@ export default function RunView({ run }: { run: Run }) {
 
       {run.artifacts.length > 0 ? (
         <>
-          <h3 className="panel-title">Downloadable artifacts</h3>
+          <h3 className="panel-title">{t("run.artifacts")}</h3>
           <div className="artifact-list">
             {run.artifacts.map((artifact) => (
               <a
@@ -64,7 +66,7 @@ export default function RunView({ run }: { run: Run }) {
                 <span className="artifact-kind">{artifact.kind}</span>
                 <span className="artifact-name">{artifact.filename}</span>
                 <span className="artifact-size">
-                  {formatBytes(artifact.size)}
+                  {formatBytes(artifact.size, locale)}
                 </span>
               </a>
             ))}
@@ -72,16 +74,11 @@ export default function RunView({ run }: { run: Run }) {
         </>
       ) : null}
 
-      {savedEmail ? (
-        <p className="hint">
-          SMTP is not configured: the email was saved as an .eml file and can be
-          sent from any mail client.
-        </p>
-      ) : null}
+      {savedEmail ? <p className="hint">{t("run.smtpHint")}</p> : null}
 
       {run.citations?.length ? (
         <>
-          <h3 className="panel-title">Cited sources</h3>
+          <h3 className="panel-title">{t("run.citations")}</h3>
           <ol className="timeline">
             {run.citations.map((citation, index) => (
               <li key={`${citation.url}-${index}`} className="timeline-item">
@@ -95,7 +92,7 @@ export default function RunView({ run }: { run: Run }) {
         </>
       ) : null}
 
-      <h3 className="panel-title">Final answer</h3>
+      <h3 className="panel-title">{t("run.final")}</h3>
       <p className="final">{run.final}</p>
     </section>
   );

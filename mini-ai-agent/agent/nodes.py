@@ -10,7 +10,13 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 
 from agent.citations import build_citations
-from agent.llm import classify_request, synthesize_research, topic_from_message
+from agent.llm import (
+    classify_request,
+    clean_report_title,
+    draft_email_fields,
+    synthesize_research,
+    topic_from_message,
+)
 from agent.state import AgentState
 
 EMAIL_MCP_URL = os.getenv("EMAIL_MCP_URL", "http://email-mcp:8001/mcp")
@@ -141,24 +147,18 @@ async def classify_node(state: AgentState) -> dict[str, Any]:
         data = result["data"]
         logging.info("Classified %r -> %s", message, action)
 
+    email = draft_email_fields(message, data, action)
     email_args = {
-        "to": str(state.get("to") or data.get("to") or "john@example.com"),
-        "subject": str(
-            state.get("subject")
-            or data.get("subject")
-            or "Message from Mini AI Agent"
-        ),
-        "body": str(
-            state.get("body")
-            or data.get("body")
-            or message
-            or "Hello, this is a message from the Mini AI Agent."
-        ),
+        "to": str(state.get("to") or email["to"] or "john@example.com"),
+        "subject": str(state.get("subject") or email["subject"]),
+        "body": str(state.get("body") or email["body"]),
     }
+    explicit_title = clean_report_title(
+        str(state.get("title") or data.get("title") or "")
+    )
+    report_title = explicit_title or topic_from_message(message) or "Mini AI Agent Report"
     report_args = {
-        "title": str(
-            state.get("title") or data.get("title") or "Mini AI Agent Report"
-        ),
+        "title": report_title,
         "content": str(
             state.get("content")
             or data.get("content")
@@ -169,9 +169,7 @@ async def classify_node(state: AgentState) -> dict[str, Any]:
         "source_filename": state.get("filename", ""),
         "sources": [],
     }
-    search_query = str(
-        state.get("title") or data.get("title") or topic_from_message(message)
-    ).strip()
+    search_query = str(explicit_title or report_title).strip()
 
     return {
         "action": action,

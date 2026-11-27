@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/components/LanguageProvider";
 import RunView from "@/components/RunView";
 import type { Run } from "@/lib/types";
 
 export default function RunDetailPage() {
+  const { t } = useI18n();
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const [run, setRun] = useState<Run | null>(null);
@@ -31,7 +33,7 @@ export default function RunDetailPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Unable to load run");
+          setError(err instanceof Error ? err.message : t("detail.loadError"));
         }
       }
     }
@@ -40,29 +42,31 @@ export default function RunDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, t]);
 
   return (
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="eyebrow">Run detail</p>
-          <h1>{id ? `Run #${id}` : "Run"}</h1>
-          <p className="lede">
-            Trace, tool output, artifacts and the final answer for this run.
-          </p>
+          <p className="eyebrow">{t("detail.eyebrow")}</p>
+          <h1>{t("detail.title", { id: id ?? "—" })}</h1>
+          <p className="lede">{t("detail.lede")}</p>
         </div>
         <Link className="ghost" href="/history">
-          ← Back to history
+          {t("detail.back")}
         </Link>
       </div>
 
-      {error ? <p className="error">Error: {error}</p> : null}
+      {error ? (
+        <p className="error">
+          {t("common.error")}: {error}
+        </p>
+      ) : null}
       {run ? (
         <RunView run={run} />
       ) : !error ? (
         <section className="card empty">
-          <p>Loading run…</p>
+          <p>{t("detail.loading")}</p>
         </section>
       ) : null}
     </div>

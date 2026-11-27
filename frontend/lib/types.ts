@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/i18n";
+
 export type Step = { node: string; status: string; ms: number };
 
 export type Citation = { title: string; url: string };
@@ -62,18 +64,11 @@ export type FileInfo = {
   url: string;
 };
 
-export const ACTION_LABEL: Record<string, string> = {
-  email: "Email",
-  report: "Report",
-  both: "Email + Report",
-  unknown: "Unsupported",
-};
-
 export const ACTIONS = [
-  { value: "auto", label: "Auto (LLM decides)" },
-  { value: "email", label: "Send an email" },
-  { value: "report", label: "Generate a report" },
-  { value: "both", label: "Email + report" },
+  { value: "auto" },
+  { value: "email" },
+  { value: "report" },
+  { value: "both" },
 ];
 
 export function formatMs(ms: number) {
@@ -86,25 +81,26 @@ export function formatMs(ms: number) {
   return `${(ms / 1000).toFixed(2)} s`;
 }
 
-export function formatBytes(bytes: number) {
+export function formatBytes(bytes: number, locale: Locale = "fr") {
+  const units = locale === "fr" ? ["o", "Ko", "Mo"] : ["B", "KB", "MB"];
   if (!bytes) {
-    return "0 o";
+    return `0 ${units[0]}`;
   }
   if (bytes < 1024) {
-    return `${bytes} o`;
+    return `${bytes} ${units[0]}`;
   }
   if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / 1024).toFixed(1)} ${units[1]}`;
   }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} ${units[2]}`;
 }
 
-export function formatTime(iso: string | null) {
+export function formatTime(iso: string | null, locale: Locale = "fr") {
   if (!iso) {
     return "—";
   }
   try {
-    return new Date(iso).toLocaleString("fr-FR", {
+    return new Date(iso).toLocaleString(locale === "fr" ? "fr-FR" : "en-GB", {
       dateStyle: "short",
       timeStyle: "short",
     });

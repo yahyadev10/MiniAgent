@@ -3,9 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useI18n } from "@/components/LanguageProvider";
 import { apiFetch, setSession } from "@/lib/api";
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
@@ -28,14 +30,14 @@ export default function LoginPage() {
       }
       if (mode === "register") {
         setMode("login");
-        setError("Account created. You can sign in now.");
+        setError(t("login.created"));
         return;
       }
       setSession(data.access_token, data.username);
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : t("login.failed"));
     } finally {
       setLoading(false);
     }
@@ -45,18 +47,15 @@ export default function LoginPage() {
     <div className="stack">
       <div className="page-head">
         <div>
-          <p className="eyebrow">Account</p>
-          <h1>Private workspace access</h1>
-          <p className="lede">
-            Login to isolate your runs and history. Without an account, the
-            shared public workspace is used.
-          </p>
+          <p className="eyebrow">{t("login.eyebrow")}</p>
+          <h1>{t("login.title")}</h1>
+          <p className="lede">{t("login.lede")}</p>
         </div>
       </div>
 
       <form className="card form" onSubmit={onSubmit}>
         <div className="field">
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username">{t("login.username")}</label>
           <input
             id="username"
             className="input"
@@ -67,7 +66,7 @@ export default function LoginPage() {
           />
         </div>
         <div className="field">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t("login.password")}</label>
           <input
             id="password"
             className="input"
@@ -82,10 +81,10 @@ export default function LoginPage() {
         <div className="actions">
           <button className="primary" type="submit" disabled={loading}>
             {loading
-              ? "Please wait…"
+              ? t("login.wait")
               : mode === "login"
-                ? "Sign in"
-                : "Create account"}
+                ? t("login.signIn")
+                : t("login.create")}
           </button>
           <button
             className="chip"
@@ -95,7 +94,7 @@ export default function LoginPage() {
               setError(null);
             }}
           >
-            {mode === "login" ? "Create account" : "Back to sign in"}
+            {mode === "login" ? t("login.create") : t("login.back")}
           </button>
         </div>
         {error ? <p className="hint">{error}</p> : null}

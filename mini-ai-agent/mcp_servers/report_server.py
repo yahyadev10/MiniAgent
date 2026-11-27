@@ -1,5 +1,6 @@
 import csv
 import html
+from collections import defaultdict
 import io
 import json
 import os
@@ -104,6 +105,54 @@ def _clean_text(value: object, limit: int = 20_000) -> str:
     text = re.sub(r"([!?.,;:])\1{2,}", r"\1\1", text)
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
     return text.strip()[:limit]
+
+
+_REPORT_TITLE_PREFIX_RE = re.compile(
+    r"^(?:(?:with|avec)\s+)?"
+    r"(?:explanation|explication|interpretation|interprétation|analysis|analyse)\b"
+    r"(?:\s+(?:and|et)\s+"
+    r"(?:explanation|explication|interpretation|interprétation|analysis|analyse))?"
+    r"\s+(?:about|on|of|sur|de|du|des|concernant)\s+",
+    re.IGNORECASE,
+)
+_REPORT_TITLE_TAIL_RE = re.compile(
+    r"\s+(?:with|avec)\s+"
+    r"(?:explanation|explication|interpretation|interprétation|analysis|analyse|"
+    r"details?|détails?)\b.*$",
+    re.IGNORECASE,
+)
+
+
+def _clean_report_title(value: object) -> str:
+    text = " ".join(_clean_text(value, 200).split())
+    text = _REPORT_TITLE_PREFIX_RE.sub("", text, count=1)
+    text = _REPORT_TITLE_TAIL_RE.sub("", text, count=1)
+    text = re.sub(
+        r"\s+(?:and|et)\s+(?:send|envoyer|email|mail|attach|joindre)\b.*$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"^(?:send|envoyer|generate|create|make|write|rapport|report)\b.*?\b(?:about|sur|of|de)\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    words = text.strip(" -:,.;").split()[:8]
+    if not words:
+        return "Mini AI Agent Report"
+    small_words = {
+        "in", "at", "on", "sur", "de", "du", "des", "about", "of", "and",
+        "et", "the", "le", "la", "les", "a", "an", "un", "une", "with", "avec",
+    }
+    title = []
+    for index, word in enumerate(words):
+        if index > 0 and word.lower() in small_words:
+            title.append(word.lower())
+        else:
+            title.append(word[:1].upper() + word[1:])
+    return " ".join(title)
 
 
 def _pdf_text(value: object) -> str:
@@ -301,10 +350,225 @@ def _numeric_summary(
     return summary
 
 
+_LOW_VALUE_CONTENT_RE = re.compile(
+    r"^(?:send|envoyer|generate|create|make|write|rapport|report|please|svp|"
+    r"resume|resumer|summarise|summarize|analyse|analyze|analyzer?)\b",
+    re.IGNORECASE,
+)
+
+
+def _normalize_header(value: object) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+
+
+def _numeric_value(value: object) -> float | None:
+    text = str(value).strip().replace(",", "").replace("$", "")
+    if not text:
+        return None
+    if text.endswith("%"):
+        text = text[:-1]
+        try:
+            return float(text) / 100
+        except ValueError:
+            return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _find_column(headers: list[str], *names: str) -> int | None:
+    normalized = [_normalize_header(name) for name in headers]
+    for wanted in names:
+        target = _normalize_header(wanted)
+        for index, header in enumerate(normalized):
+            if header == target:
+                return index
+        for index, header in enumerate(normalized):
+            if target and (target in header or header in target):
+                return index
+    return None
+
+
+def _column_values(body: list[list[str]], index: int | None) -> list[float]:
+    if index is None:
+        return []
+    values: list[float] = []
+    for row in body:
+        if index < len(row):
+            value = _numeric_value(row[index])
+            if value is not None:
+                values.append(value)
+    return values
+
+
+def _month_key(value: str) -> str:
+    match = re.match(r"(\d{4})-(\d{2})", value.strip())
+    return f"{match.group(1)}-{match.group(2)}" if match else value.strip()[:7] or "Unknown"
+
+
+def _group_total(
+    body: list[list[str]],
+    key_index: int | None,
+    value_index: int | None,
+    key_fn=None,
+) -> dict[str, float]:
+    totals: dict[str, float] = defaultdict(float)
+    if key_index is None or value_index is None:
+        return {}
+    for row in body:
+        if key_index >= len(row) or value_index >= len(row):
+            continue
+        value = _numeric_value(row[value_index])
+        if value is None:
+            continue
+        key = str(row[key_index]).strip() or "Unknown"
+        if key_fn is not None:
+            key = key_fn(key)
+        totals[key] += value
+    return dict(totals)
+
+
+def _fmt_money(value: float) -> str:
+    if abs(value) >= 100:
+        return f"${value:,.0f}"
+    return f"${value:,.2f}"
+
+
+def _top_entry(totals: dict[str, float], total: float, label: str) -> str:
+    if not totals:
+        return ""
+    name, value = max(totals.items(), key=lambda item: item[1])
+    share = (value / total * 100) if total else 0
+    return f"{label}: {name} with {_fmt_money(value)} ({share:.1f}% of total)."
+
+
+def _dataset_analysis(
+    headers: list[str],
+    body: list[list[str]],
+    summary: list[dict[str, object]],
+) -> list[str]:
+    if not headers or not body:
+        return []
+
+    revenue_index = _find_column(
+        headers, "net_revenue", "revenue", "sales", "amount", "total", "gross_revenue", "value"
+    )
+    gross_index = _find_column(headers, "gross_revenue", "gross_sales", "list_revenue")
+    profit_index = _find_column(headers, "profit", "margin")
+    date_index = _find_column(headers, "date", "month", "period", "day")
+    region_index = _find_column(headers, "region", "market", "country", "area")
+    category_index = _find_column(headers, "category", "product_category")
+    product_index = _find_column(headers, "product", "item", "sku")
+    rep_index = _find_column(headers, "sales_rep", "rep", "owner", "agent")
+    channel_index = _find_column(headers, "channel", "source")
+    segment_index = _find_column(headers, "segment", "customer_segment")
+    discount_index = _find_column(headers, "discount", "discount_rate")
+    units_index = _find_column(headers, "units", "quantity", "qty")
+
+    revenues = _column_values(body, revenue_index)
+    total_revenue = sum(revenues)
+    profits = _column_values(body, profit_index)
+    total_profit = sum(profits)
+    discounts = _column_values(body, discount_index)
+    units = _column_values(body, units_index)
+    lines: list[str] = []
+
+    if revenues:
+        average = total_revenue / len(revenues)
+        lines.append(
+            f"Total net revenue is {_fmt_money(total_revenue)} across {len(body)} orders, "
+            f"with an average order value of {_fmt_money(average)}."
+        )
+    if profits and total_revenue:
+        margin = total_profit / total_revenue * 100
+        lines.append(
+            f"Total profit is {_fmt_money(total_profit)}, representing a {margin:.1f}% margin on revenue."
+        )
+    if date_index is not None and revenues:
+        monthly = _group_total(body, date_index, revenue_index, key_fn=_month_key)
+        if monthly:
+            best = max(monthly.items(), key=lambda item: item[1])
+            worst = min(monthly.items(), key=lambda item: item[1])
+            lines.append(
+                f"Best month: {best[0]} at {_fmt_money(best[1])}; "
+                f"lowest month: {worst[0]} at {_fmt_money(worst[1])}."
+            )
+    for label, key_index in (
+        ("Top region", region_index),
+        ("Top category", category_index),
+        ("Top product", product_index),
+        ("Top sales rep", rep_index),
+        ("Leading channel", channel_index),
+        ("Top customer segment", segment_index),
+    ):
+        if key_index is None or not revenues:
+            continue
+        line = _top_entry(_group_total(body, key_index, revenue_index), total_revenue, label)
+        if line:
+            lines.append(line)
+    if discounts:
+        average_discount = sum(discounts) / len(discounts) * 100
+        gross_values = _column_values(body, gross_index)
+        if gross_values and revenues:
+            gross = sum(gross_values)
+            foregone = max(0.0, gross - total_revenue)
+            lines.append(
+                f"Average discount is {average_discount:.1f}%, reducing gross revenue "
+                f"from {_fmt_money(gross)} to {_fmt_money(total_revenue)} "
+                f"({_fmt_money(foregone)} foregone)."
+            )
+        else:
+            lines.append(f"Average discount is {average_discount:.1f}%.")
+    if units:
+        lines.append(
+            f"Units sold: {int(sum(units)):,}, averaging {sum(units) / len(units):.1f} units per order."
+        )
+    if summary:
+        lines.append(
+            "Numeric fields: " + ", ".join(str(item["column"]) for item in summary) + "."
+        )
+    return lines[:12]
+
+
+def _data_overview(
+    title: str,
+    content: str,
+    source_filename: str,
+    headers: list[str],
+    body: list[list[str]],
+    analysis: list[str],
+) -> str:
+    if not headers or not body:
+        return content
+    text = (content or "").strip()
+    lowered = text.lower()
+    low_value = (
+        not text
+        or len(text) < 160
+        or bool(_LOW_VALUE_CONTENT_RE.match(text))
+        or "generate report about" in lowered
+        or "send an email" in lowered
+    )
+    if not low_value:
+        return text
+    source = source_filename or "the supplied dataset"
+    lines = [
+        f"This report analyzes {title} using {len(body)} transactions from {source}.",
+        "The objective is to summarize revenue, profit, discounts and segment performance over the quarter.",
+    ]
+    lines.extend(analysis[:2])
+    lines.append(
+        "The following sections break down performance by period, region, category, product and channel."
+    )
+    return "\n".join(line for line in lines if line)
+
+
 def _insights(
     headers: list[str],
     body: list[list[str]],
     summary: list[dict[str, object]],
+    analysis: list[str] | None = None,
 ) -> list[str]:
     if not headers:
         return [
@@ -313,19 +577,9 @@ def _insights(
         ]
 
     lines = [f"{len(body)} data rows across {len(headers)} columns."]
-    if summary:
-        highest = max(summary, key=lambda item: float(item["mean"]))
-        widest = max(
-            summary,
-            key=lambda item: float(item["max"]) - float(item["min"]),
-        )
-        lines.append(
-            f"Highest average: {highest['column']} ({highest['mean']})."
-        )
-        lines.append(
-            f"Widest range: {widest['column']} "
-            f"({widest['min']} to {widest['max']})."
-        )
+    if analysis:
+        lines.extend(analysis)
+    elif summary:
         lines.append(
             "Numeric columns: " + ", ".join(str(item["column"]) for item in summary)
         )
@@ -817,7 +1071,7 @@ def generate_report(
     citations: list[dict] | None = None,
 ) -> str:
     """Generate a real PDF + HTML report with optional data and web sources."""
-    title = _clean_text(title, 200) or "Mini AI Agent Report"
+    title = _clean_report_title(title)
     content = _clean_text(content, 20_000)
     data = (data or "").strip()[:200000]
     clean_sources = [
@@ -840,20 +1094,18 @@ def generate_report(
 
     headers, body = _parse_data(data) if data else ([], [])
     summary = _numeric_summary(headers, body)
-    insights = _insights(headers, body, summary) if (headers or body) else []
+    analysis = _dataset_analysis(headers, body, summary)
+    insights = (
+        _insights(headers, body, summary, analysis) if (headers or body) else []
+    )
     if clean_sources:
         insights.append(
             f"{len(clean_sources)} web sources were used to build this report."
         )
     chart = _mean_chart(summary)
-    bare_request = re.match(
-        r"(?i)^(generate|create|make|write|rapport|report)\b", content.strip()
+    content = _data_overview(
+        title, content, source_filename, headers, body, analysis
     )
-    if (headers or body) and bare_request and len(content.strip()) < 120:
-        content = (
-            f"This report analyzes {source_filename or 'the provided dataset'} "
-            f"({len(body)} rows, {len(headers)} columns)."
-        )
     paragraphs = _prepare_paragraphs(content, clean_sources)
 
     base = f"report-{uuid.uuid4().hex[:10]}"

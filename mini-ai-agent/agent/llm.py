@@ -37,6 +37,7 @@ JSON shape:
 
 Fill the email fields for "email" and "both".
 Fill the report fields for "report" and "both".
+Write a natural subject and body. Never copy the raw user prompt into the body.
 Keep subject, body, title and content short (one or two sentences).
 Return JSON only, with no markdown and no explanation."""
 
@@ -177,6 +178,127 @@ def _is_informational_query(message: str) -> bool:
     return bool(_INFORMATIONAL_RE.match(text))
 
 
+_TOPIC_ARTICLES = {
+    "a",
+    "an",
+    "the",
+    "this",
+    "that",
+    "these",
+    "those",
+    "un",
+    "une",
+    "le",
+    "la",
+    "les",
+    "des",
+    "ce",
+    "cette",
+    "ces",
+}
+
+_EMAIL_TOKEN_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+
+_TOPIC_CUTOFF_RE = re.compile(
+    r"\b(?:(?:and|et|then|puis|please|svp)\s+)*"
+    r"(?:send|sent|email|mail|attach|include|download|upload|save|write|"
+    r"generate|create|make|produce|prepare|forward|reply|"
+    r"envoyer|envoye|envoyez|envoie|joindre|ajouter|mettre|ecrire|"
+    r"creer|generer|faire|fais)\b",
+    re.IGNORECASE,
+)
+
+_TOPIC_DESCRIPTOR_RE = re.compile(
+    r"\b(?:with|avec)\s+"
+    r"(?:explanation|explication|interpretation|interprétation|"
+    r"analysis|analyse|details?|détails?)\b",
+    re.IGNORECASE,
+)
+
+_TOPIC_PREFIX_RE = re.compile(
+    r"^(?:(?:with|avec)\s+)?"
+    r"(?:explanation|explication|interpretation|interprétation|analysis|analyse)\b"
+    r"(?:\s+(?:and|et)\s+"
+    r"(?:explanation|explication|interpretation|interprétation|analysis|analyse))?"
+    r"\s+(?:about|on|of|sur|de|du|des|concernant)\s+",
+    re.IGNORECASE,
+)
+
+
+def _clean_topic(text: str) -> str:
+    value = " ".join((text or "").split())
+    value = _EMAIL_TOKEN_RE.sub(" ", value)
+    value = _TOPIC_PREFIX_RE.sub("", value, count=1)
+    cutoffs = [
+        match.start()
+        for pattern in (_TOPIC_CUTOFF_RE, _TOPIC_DESCRIPTOR_RE)
+        for match in pattern.finditer(value)
+        if match.start() > 0
+    ]
+    if cutoffs:
+        value = value[: min(cutoffs)]
+    value = re.sub(
+        r"\b(?:to|pour|a|de|du|des|sur|about|on|of|in|at|concernant)\s*$",
+        "",
+        value.strip(),
+        flags=re.IGNORECASE,
+    )
+    words = value.split()
+    while words and words[0] in _TOPIC_ARTICLES:
+        words.pop(0)
+    return " ".join(words[:8]).strip(" ,.;:!?-")
+
+
+def _title_topic(topic: str) -> str:
+    words = (topic or "").split()
+    if not words:
+        return ""
+    small_words = {
+        "in", "at", "on", "sur", "de", "du", "des", "about", "of", "by",
+        "for", "to", "with", "and", "et", "the", "le", "la", "les", "a",
+        "an", "un", "une", "par", "pour", "avec",
+    }
+    title = []
+    for index, word in enumerate(words):
+        if index > 0 and word.lower() in small_words:
+            title.append(word.lower())
+        else:
+            title.append(word[:1].upper() + word[1:])
+    return " ".join(title)
+
+
+_WEATHER_TITLE_STOPWORDS = {
+    "what", "whats", "is", "are", "the", "a", "an", "like", "today", "tomorrow",
+    "current", "currently", "now", "in", "for", "at", "of", "please", "tell",
+    "me", "how", "will", "be", "this", "week", "weekend", "weather", "forecast",
+    "meteo", "temperature", "temperatures", "rain", "snow", "wind", "humidity",
+    "quel", "quels", "quelle", "quelles", "est", "sont", "actuel", "actuelle",
+    "actuels", "actuelles", "en", "la", "le", "les", "de", "du", "des", "au",
+    "aux", "dans", "sur", "pour", "fait", "faire", "il", "y", "aujourdhui",
+    "maintenant", "prevision", "previsions", "donne", "donner", "dis", "dire",
+}
+
+
+def _weather_title(message: str) -> str:
+    if not _is_weather_query(message):
+        return ""
+    value = _EMAIL_TOKEN_RE.sub(" ", _normalize(message))
+    hint = _WEATHER_HINT_RE.search(value)
+    if not hint:
+        return ""
+    value = value[hint.start() :]
+    for match in _TOPIC_CUTOFF_RE.finditer(value):
+        if match.start() > 0:
+            value = value[: match.start()]
+            break
+    words = [
+        word for word in value.split()
+        if word not in _WEATHER_TITLE_STOPWORDS and len(word) > 1
+    ]
+    location = _title_topic(" ".join(words[:4]))
+    return f"Weather in {location}" if location else "Weather report"
+
+
 def _topic_from_message(message: str) -> str:
     """Turn a command such as 'generate a report about sales' into 'Sales'."""
     normalized = _normalize(message)
@@ -208,11 +330,9 @@ def _topic_from_message(message: str) -> str:
         normalized,
     )
     if report_match:
-        words = report_match.group(1).split()
-        while words and words[0] in articles:
-            words.pop(0)
-        topic = " ".join(words).capitalize()
+        topic = _title_topic(_clean_topic(report_match.group(1)))
         return "" if topic.lower() in {"pdf", "html", "document", "report", "rapport"} else topic
+
 
     email_match = re.search(
         r"\b(?:email|mail|courriel)\b(?:\s+to\s+\S+)?\s+"
@@ -220,10 +340,11 @@ def _topic_from_message(message: str) -> str:
         normalized,
     )
     if email_match:
-        words = email_match.group(1).split()
-        while words and words[0] in articles:
-            words.pop(0)
-        return " ".join(words).capitalize()
+        return _title_topic(_clean_topic(email_match.group(1)))
+
+    weather = _weather_title(message)
+    if weather:
+        return weather
 
     words = normalized.split()
     generation_verbs = {
@@ -289,15 +410,120 @@ def _topic_from_message(message: str) -> str:
     while words and words[0] in articles:
         words.pop(0)
 
-    topic = " ".join(words).capitalize()
+    topic = _title_topic(_clean_topic(" ".join(words)))
     if topic.lower() in {"pdf", "html", "document", "report", "rapport"}:
         return ""
     return topic
 
 
+
 def topic_from_message(message: str) -> str:
     """Public helper used to derive a short report/research topic."""
     return _topic_from_message(message)
+
+
+def clean_report_title(value: str) -> str:
+    """Normalize an explicit report title into a short meaningful title."""
+    direct = _title_topic(_clean_topic(value))
+    derived = _topic_from_message(value)
+    low_value_prefixes = (
+        "send ", "generate ", "create ", "make ", "write ", "with ",
+        "explanation ", "explication ", "interpretation ", "analyse ",
+    )
+    if derived and direct.lower().startswith(low_value_prefixes):
+        return derived
+    return direct or derived
+
+
+_FIELD_LABELS = "subject|objet|sujet|body|message|corps|contenu|texte|to|destinataire"
+
+
+def _extract_labeled_value(message: str, labels: str) -> str:
+    pattern = (
+        rf"(?:^|\n)\s*(?:{labels})\s*:\s*(.*?)"
+        rf"(?=\n\s*(?:{_FIELD_LABELS})\s*:|\Z)"
+    )
+    match = re.search(pattern, message or "", re.IGNORECASE | re.DOTALL)
+    return match.group(1).strip().strip('"“”\'') if match else ""
+
+
+def _detect_language(message: str) -> str:
+    text = _normalize(message)
+    french = {
+        "bonjour",
+        "merci",
+        "cordialement",
+        "veuillez",
+        "envoyer",
+        "envoye",
+        "envoyez",
+        "objet",
+        "sujet",
+        "rapport",
+        "ci joint",
+        "cijoint",
+    }
+    return "fr" if any(word in text for word in french) else "en"
+
+
+def draft_email_fields(
+    message: str,
+    data: dict[str, Any] | None = None,
+    action: str = "email",
+) -> dict[str, str]:
+    data = data or {}
+    normalized_message = message.replace("\n", " ").strip().lower()
+    to = str(data.get("to") or _extract_email(message) or "").strip()
+
+    subject = str(data.get("subject") or "").strip()
+    if not subject or subject.lower() == normalized_message or len(subject) > 100:
+        subject = _extract_labeled_value(message, "subject|objet|sujet")
+    if subject.lower() == normalized_message or len(subject) > 100:
+        subject = ""
+
+    body = str(data.get("body") or "").strip()
+    if body.replace("\n", " ").strip().lower() == normalized_message:
+        body = ""
+    if not body:
+        body = _extract_labeled_value(message, "body|message|corps|contenu|texte")
+    if body.replace("\n", " ").strip().lower() == normalized_message:
+        body = ""
+
+    language = _detect_language(message)
+
+    if not subject:
+        if action == "both":
+            subject = (
+                "Rapport Mini AI Agent"
+                if language == "fr"
+                else "Mini AI Agent report"
+            )
+        else:
+            subject = (
+                "Message de Mini AI Agent"
+                if language == "fr"
+                else "Message from Mini AI Agent"
+            )
+
+    if not body:
+        if action == "both":
+            body = (
+                "Bonjour,\n\nVeuillez trouver le rapport ci-joint.\n\n"
+                "Cordialement,\nMini AI Agent"
+                if language == "fr"
+                else "Hello,\n\nPlease find the attached report.\n\n"
+                "Best regards,\nMini AI Agent"
+            )
+        else:
+            body = (
+                "Bonjour,\n\nCeci est un message de Mini AI Agent.\n\n"
+                "Cordialement,\nMini AI Agent"
+                if language == "fr"
+                else "Hello,\n\nThis is a message from Mini AI Agent.\n\n"
+                "Best regards,\nMini AI Agent"
+            )
+
+    return {"to": to, "subject": subject, "body": body}
 
 
 def _keyword_result(message: str, force_action: str | None = None) -> dict[str, Any]:
@@ -314,14 +540,14 @@ def _keyword_result(message: str, force_action: str | None = None) -> dict[str, 
 
     topic = _topic_from_message(message)
     report_title = topic or "Mini AI Agent Report"
-    subject = topic or "Message from Mini AI Agent"
+    email = draft_email_fields(message, action=action)
 
     return {
         "action": action,
         "data": {
-            "to": _extract_email(message),
-            "subject": subject,
-            "body": message,
+            "to": email["to"],
+            "subject": email["subject"],
+            "body": email["body"],
             "title": report_title,
             "content": message,
         },
